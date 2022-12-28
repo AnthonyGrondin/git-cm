@@ -1,5 +1,5 @@
 use crate::{
-    args::App,
+    args::Args,
     cargo::parse_manifest,
     git::{
         check_staged_files_exist, commit_to_repo, generate_commit_msg, get_repository,
@@ -7,7 +7,7 @@ use crate::{
     },
     questions::{ask, SurveyResults},
 };
-use clap::Clap;
+use clap::Parser;
 use std::{collections::HashMap, path::Path};
 
 mod args;
@@ -46,12 +46,12 @@ fn create_commit(commit_msg: &str, repo: &Path) {
     println!("Wrote commit: {}", hash);
 }
 
-fn run(app: App) {
+fn run(args: Args) {
     // No point to continue if repo doesn't exist or there are no staged files
-    if check_staged_files_exist(app.repo_path.as_path()) {
+    if check_staged_files_exist(args.repo_path.as_path()) {
         let survey = run_dialog();
         let commit_msg = survey.map(generate_commit_msg).and_then(|msg| {
-            if app.edit {
+            if args.edit {
                 edit::edit(msg).ok()
             } else {
                 Some(msg)
@@ -59,7 +59,7 @@ fn run(app: App) {
         });
 
         match commit_msg {
-            Some(msg) => create_commit(&msg, app.repo_path.as_path()),
+            Some(msg) => create_commit(&msg, args.repo_path.as_path()),
             None => eprintln!("Empty commit message specified!"),
         }
     } else {
@@ -68,10 +68,10 @@ fn run(app: App) {
 }
 
 fn main() {
-    let app: App = App::parse();
+    let args: Args = Args::parse();
     // Early return if the path doesn't exist.
-    if !app.repo_path.exists() || get_repository(app.repo_path.as_path()).is_err() {
-        eprintln!("Invalid path to repository: {}", app.repo_path.display());
+    if !args.repo_path.exists() || get_repository(args.repo_path.as_path()).is_err() {
+        eprintln!("Invalid path to repository: {}", args.repo_path.display());
     } else {
         // When terminating the CLI during the dialoguer phase, the cursor will be
         // hidden. The callback here makes sure that the cursor is visible in these
@@ -82,6 +82,6 @@ fn main() {
             std::process::exit(1);
         });
 
-        run(app);
+        run(args);
     }
 }

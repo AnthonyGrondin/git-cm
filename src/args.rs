@@ -1,13 +1,13 @@
-use clap::Clap;
+use clap::Parser;
 use std::path::PathBuf;
 
-#[derive(Clap, Debug)]
-#[clap(author, version)]
-pub struct App {
+#[derive(Parser, Debug)]
+#[command(author, version)]
+pub struct Args {
     /// Opens the user's editor after the questioning process.
-    #[clap(long, short = 'e')]
+    #[arg(long, short = 'e')]
     pub edit: bool,
     /// The path to a git repository.
-    #[clap(name = "REPO", default_value = ".", parse(from_os_str))]
+    #[arg(name = "REPO", default_value = ".", value_parser)]
     pub repo_path: PathBuf,
 }
