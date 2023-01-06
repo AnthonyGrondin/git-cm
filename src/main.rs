@@ -16,26 +16,33 @@ mod git;
 mod questions;
 
 fn run_dialog() -> Option<SurveyResults> {
-    let manifest = parse_manifest().unwrap();
-    if let Some(package) = manifest.package {
-        if let Some(metadata) = package.metadata {
-            // Use default scopes and/or custom ones.
-            let mut types: HashMap<&str, &str> = HashMap::with_capacity(10);
-            if metadata.commits.defaults {
-                types.extend(&*DEFAULT_TYPES);
-            }
-
-            // Insert custom types.
-            if let Some(custom_types) = &metadata.commits.r#type {
-                for r#type in custom_types.iter() {
-                    types.insert(&r#type.name, &r#type.desc);
+    let mut types: HashMap<&str, &str> = HashMap::with_capacity(10);
+    if let Ok(manifest) = parse_manifest() {
+        if let Some(package) = manifest.package {
+            if let Some(metadata) = package.metadata {
+                // Use default scopes and/or custom ones.
+                if metadata.commits.defaults {
+                    types.extend(&*DEFAULT_TYPES);
                 }
-            }
 
-            return Some(ask(types));
-        } else {
-            eprintln!("Please specify allowed scopes inside of your Cargo.toml file under the `package.metadata.cz` key!");
+                // Insert custom types.
+                if let Some(custom_types) = &metadata.commits.r#type {
+                    for r#type in custom_types.iter() {
+                        types.insert(&r#type.name, &r#type.desc);
+                    }
+                }
+
+                return Some(ask(types));
+            } else {
+                eprintln!("Please specify allowed scopes inside of your Cargo.toml file under the `package.metadata.cz` key!");
+            }
         }
+    // If no manifest found, use default types
+    } else {
+        eprintln!("No manifest found!");
+        let mut types: HashMap<&str, &str> = HashMap::with_capacity(10);
+        types.extend(&*DEFAULT_TYPES);
+        return Some(ask(types));
     }
 
     None
